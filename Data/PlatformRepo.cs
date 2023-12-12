@@ -13,7 +13,12 @@ namespace PlatformService.Data
 
         public void CreatePlatform(Platform platform)
         {
-            throw new NotImplementedException();
+            if (platform == null)
+            {
+                throw new ArgumentNullException(nameof(platform));
+            }
+
+            _context.Platforms.Add(platform);
         }
 
         public IEnumerable<Platform> GetAllPlatforms()
@@ -24,7 +29,7 @@ namespace PlatformService.Data
         public Platform GetPlatformById(int id)
         {
             var platform = _context.Platforms.FirstOrDefault(p => p.Id == id);
-            return platform != null ? platform : new Platform();
+            return platform ?? new Platform();
         }
 
         public bool SaveChanges()
