@@ -52,8 +52,7 @@ namespace PlatformService.Controllers
             }
             catch(Exception ex)
             {
-                if(ex.InnerException != null)
-                    Console.WriteLine($"--> Could not send synchronously: {ex.InnerException.Message}");
+                Console.WriteLine($"--> Could not send synchronously: {ex.Message}");
             }
 
             return CreatedAtRoute(nameof(GetPlatformById), new { Id = platformReadDto.Id }, platformReadDto);
