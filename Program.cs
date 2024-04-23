@@ -23,11 +23,6 @@ if (builder.Environment.IsDevelopment())
 {
     Console.WriteLine("--> Using InMem Db");
     builder.Services.AddDbContext<AppDbContext>(opt => opt.UseInMemoryDatabase("InMem"));
-
-    builder.Services.AddHttpsRedirection(options =>
-        {
-            options.HttpsPort = 5001;
-        });
 }
 else
 {
