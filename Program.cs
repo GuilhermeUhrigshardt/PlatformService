@@ -1,6 +1,8 @@
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using PlatformService.AsyncDataServices;
 using PlatformService.Data;
+using PlatformService.SyncDataService.Grpc;
 using PlatformService.SyncDataService.Http;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,17 +11,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-    
+
 builder.Services.AddScoped<IPlatformRepo, PlatformRepo>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddControllers();
 builder.Services.AddHttpClient<ICommandDataClient, HttpCommandDataClient>();
 builder.Services.AddSingleton<IMessageBusClient, MessageBusClient>();
+builder.Services.AddGrpc();
 
 if (builder.Environment.IsDevelopment())
 {
-    Console.WriteLine("--> Using InMem Db");    
+    Console.WriteLine("--> Using InMem Db");
     builder.Services.AddDbContext<AppDbContext>(opt => opt.UseInMemoryDatabase("InMem"));
+
+    builder.Services.AddHttpsRedirection(options =>
+        {
+            options.HttpsPort = 5001;
+        });
 }
 else
 {
@@ -27,6 +35,8 @@ else
     Console.WriteLine($"--> Connection string: {builder.Configuration.GetConnectionString("PlatformsConn")}");
     builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("PlatformsConn")));
 }
+
+
 
 Console.WriteLine($"--> CommandService Endpoint {builder.Configuration["CommandService"]}");
 
@@ -40,11 +50,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+//app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthorization();
 app.UseEndpoints(endpoints =>
 {
     _ = endpoints.MapControllers();
+    _ = endpoints.MapGrpcService<GrpcPlatformService>();
+
+    _ = endpoints.MapGet("/Protos/paltforms.proto", async context =>
+    {
+        await context.Response.WriteAsync(File.ReadAllText("Protos/platforms.proto"));
+    });
 });
 
 PrepDb.PrepPopulation(app, app.Environment.IsProduction());
